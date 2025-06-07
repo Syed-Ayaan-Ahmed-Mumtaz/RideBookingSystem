@@ -1,7 +1,7 @@
 #include<iostream>
 #include<string>
 using namespace std;
-
+// Base Level Classes -> Vehicle, Car, Bike, Profile
 // ================== VEHICLE ==================
 class Vehicle{
   string vehicleNumber[3];
@@ -9,7 +9,7 @@ class Vehicle{
   string type[3];
  public:
  Vehicle(){
-    vehicleNumber[0] = "BRF 147";  // Number Plate for Suzuki ALto
+    vehicleNumber[0] = "BRF 147";  // Number Plate for Suzuki Alto
     vehicleNumber[1] = "AFR 776";  // Number Plate for Honda CD 70
     vehicleNumber[2] = "RFT 104";  // Number Plate for Honda 125
     model[0] = "Suzuki Alto - White";
@@ -56,6 +56,13 @@ class Profile{
 };
 int Profile::Ride_id = 0;
 int Profile::Delivery_id = 0;
+
+// Mid Level Classes: Ride, BookingSystem
+class Ride {
+};
+
+class BookingSystem {
+};
 
 // =============== USER ===================
 class User : public Profile, public Vehicle{
