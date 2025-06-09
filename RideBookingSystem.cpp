@@ -1,26 +1,44 @@
 #include<iostream>
 #include<string>
+#define MAX_RIDES 100   //used in BookingSystem logic
 using namespace std;
 // Base Level Classes -> Vehicle, Car, Bike, Profile
 // ================== VEHICLE ==================
 class Vehicle{
-  string vehicleNumber[3];
-  string model[3];
-  string type[3];
- public:
- Vehicle(){
-    vehicleNumber[0] = "BRF 147";  // Number Plate for Suzuki Alto
-    vehicleNumber[1] = "AFR 776";  // Number Plate for Honda CD 70
-    vehicleNumber[2] = "RFT 104";  // Number Plate for Honda 125
-    model[0] = "Suzuki Alto - White";
-    model[1] = "Honda CD 70";
-    model[2] = "Honda 125";
-    type[0] = "Car";
-    type[1] = "Bike";
-    type[2] = "Bike";
- } 
+    protected:
+    string vehicleNumber[3];
+    string model[3];
+    string type[3];
+    bool available[3];
+public:
+    Vehicle() {
+        vehicleNumber[0] = "BRF 147"; model[0] = "Suzuki Alto - White"; type[0] = "Car"; // Car Suzuki Alto
+        vehicleNumber[1] = "AFR 776"; model[1] = "Honda CD 70"; type[1] = "Bike"; // Bike Honda CD70
+        vehicleNumber[2] = "RFT 104"; model[2] = "Honda 125"; type[2] = "Bike"; // Bike Honda 125
+        for (int i = 0; i < 3; i++) { available[i] = true; }
+    }
+    // Assign first available vehicle based on availability and vehicleType
+    bool assignVehicle(string vType, string& outModel, string& outPlate) {
+        for (int i = 0; i < 3; i++) {
+            if(type[i]==vType && available[i]) {
+                outModel = model[i];
+                outPlate = vehicleNumber[i];
+                available[i] = false;
+                return true;
+            }
+        }
+        return false;
+    } 
+    //Making vehicle available after use
+    void releaseVehicle(string plate) {
+        for (int i = 0; i < 3; i++) {
+            if(vehicleNumber[i]==plate) {
+                available[i] = true;
+                break;
+            }
+        }
+    } 
 };
-
 // Subclasses of Vehicle
 class Car : public Vehicle {
 public:
@@ -58,10 +76,102 @@ int Profile::Ride_id = 0;
 int Profile::Delivery_id = 0;
 
 // Mid Level Classes: Ride, BookingSystem
-class Ride {
+class Ride : public Vehicle {
+    private:
+        static int rideID;
+        int rideNumber;
+        string vehicleType, status;
+        float fare, baseRate, ratePerKm;
+        string modelAssigned, plateAssigned;
+    public:
+    Ride(string vType, float distance) {
+        vehicleType = vType;
+        rideID++;
+        rideNumber = rideID;
+        status = "Ride Requested";
+        //assigning a vehicle when ride requested
+        bool assigned = assignVehicle(vehicleType, modelAssigned, plateAssigned);
+        if(!assigned) {
+            cout << "No " << vType << " available at the moment.\n";
+            status = "Failed!";
+            return;
+        }
+        calculateFare(distance);
+    }
+    int getRideID() const { return rideNumber; } 
+    string getStatus() const { return status; }
+    //getters useful for BookingSystem logic
+    void calculateFare(float distance) {
+    //distance in km, this way without using maps ride fares are calculated dynamically
+        if(vehicleType=="Car") {
+            baseRate = 0.8;     
+            ratePerKm = 0.5;
+            //amounts in USD
+        }
+        else if(vehicleType=="Bike") {
+            baseRate = 0.5;
+            ratePerKm = 0.3;
+        }
+        fare = baseRate + ratePerKm * distance;
+    }
+    void updateStatus(string newStatus) {
+        status = newStatus;
+    } 
+    void completeRide() {
+        status = "Completed!";
+        releaseVehicle(plateAssigned);
+    }
+    void displayRideDetails() {
+        cout << "Ride ID: " << rideNumber
+             << "\nVehicle Type: " << vehicleType
+             << "\nFare: " << fare << "$ "
+             << "\nStatus: " << status << endl;
+    }   
 };
-
+int Ride::rideID = 0;
 class BookingSystem {
+    private:
+        Ride *rides[MAX_RIDES];
+        int rideCount;
+    public:
+    BookingSystem() {
+        rideCount = 0;
+        for (int i = 0; i < MAX_RIDES; i++) rides[i] = nullptr;
+    }
+    void bookRide(string vehicleType, float distance) {
+        if(rideCount>=MAX_RIDES) {
+            cout << "Maximum number of rides reached! \n";
+            return;
+        }
+        rides[rideCount] = new Ride(vehicleType, distance);
+        if(rides[rideCount] -> getStatus()!="Failed!") {
+            cout << "Ride booked successfully!\n";
+        }
+        rideCount++;
+    }
+    void completeRide(int rideID) {
+        for (int i = 0; i < rideCount; i++) {
+            if(rides[i]!=nullptr && rides[i]->getRideID()==rideID) {
+                rides[i]->completeRide();
+                cout << "Ride Marked as Complete!\n";
+                return;
+            }
+        }
+        cout << "RideID not found!";
+    }
+    void viewAllRides() {
+        for (int i = 0; i < rideCount; i++) {
+            if (rides[i] != nullptr) {
+                rides[i]->displayRideDetails();
+                cout << "----------------------\n";
+            }
+        }
+    }
+    ~BookingSystem() {
+        for (int i = 0; i < rideCount; i++) {
+            delete rides[i];
+        }
+    }
 };
 
 // =============== USER ===================
