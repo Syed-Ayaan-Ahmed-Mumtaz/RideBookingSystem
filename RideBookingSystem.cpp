@@ -15,8 +15,9 @@ public:
         vehicleNumber[0] = "BRF 147"; model[0] = "Suzuki Alto - White"; type[0] = "Car";
         vehicleNumber[1] = "AFR 776"; model[1] = "Honda CD 70"; type[1] = "Bike";
         vehicleNumber[2] = "RFT 104"; model[2] = "Honda 125"; type[2] = "Bike";
-        for (int i = 0; i < 3; i++) { available[i] = true; }
+        for (int i = 0; i < 3; i++) available[i] = true;
     }
+
     bool assignVehicle(string vType, string& outModel, string& outPlate) {
         for (int i = 0; i < 3; i++) {
             if (type[i] == vType && available[i]) {
@@ -28,32 +29,13 @@ public:
         }
         return false;
     }
+
     void releaseVehicle(string plate) {
         for (int i = 0; i < 3; i++) {
             if (vehicleNumber[i] == plate) {
                 available[i] = true;
                 break;
             }
-        }
-    }
-};
-
-// ============== VEHICLE SUBCLASSES ==========
-class Car : public Vehicle {
-public:
-    Car() {
-        cout << "Car Initialized: Suzuki Alto - White, Plate: BRF 147" << endl;
-    }
-};
-
-class Bike : public Vehicle {
-public:
-    Bike(string modelName) {
-        if (modelName == "CD70") {
-            cout << "Bike Initialized: Honda CD 70, Plate: AFR 776" << endl;
-        }
-        else if (modelName == "125") {
-            cout << "Bike Initialized: Honda 125, Plate: RFT 104" << endl;
         }
     }
 };
@@ -68,7 +50,7 @@ public:
 int Profile::Ride_id = 0;
 int Profile::Delivery_id = 0;
 
-// =============== RIDE =======================
+// =============== RIDE ====================
 class Ride : public Vehicle {
 private:
     static int rideID;
@@ -99,8 +81,7 @@ public:
         if (vehicleType == "Car") {
             baseRate = 0.8;
             ratePerKm = 0.5;
-        }
-        else if (vehicleType == "Bike") {
+        } else if (vehicleType == "Bike") {
             baseRate = 0.5;
             ratePerKm = 0.3;
         }
@@ -114,14 +95,14 @@ public:
 
     void displayRideDetails() {
         cout << "Ride ID: " << rideNumber
-            << "\nVehicle Type: " << vehicleType
-            << "\nFare: " << fare << "$"
-            << "\nStatus: " << status << endl;
+             << "\nVehicle Type: " << vehicleType
+             << "\nFare: " << fare << "$"
+             << "\nStatus: " << status << endl;
     }
 };
 int Ride::rideID = 0;
 
-// =============== BOOKING SYSTEM =============
+// =============== BOOKING SYSTEM ==============
 class BookingSystem {
 private:
     Ride* rides[MAX_RIDES];
@@ -132,16 +113,17 @@ public:
         for (int i = 0; i < MAX_RIDES; i++) rides[i] = NULL;
     }
 
-    void bookRide(string vehicleType, float distance) {
+    int bookRide(string vehicleType, float distance) {
         if (rideCount >= MAX_RIDES) {
             cout << "Maximum number of rides reached!\n";
-            return;
+            return -1;
         }
         rides[rideCount] = new Ride(vehicleType, distance);
         if (rides[rideCount]->getStatus() != "Failed!") {
             cout << "Ride booked successfully!\n";
+            cout << "Your Ride ID is: " << rides[rideCount]->getRideID() << endl;
         }
-        rideCount++;
+        return rideCount++;
     }
 
     void completeRide(int rideID) {
@@ -165,52 +147,25 @@ public:
     }
 
     ~BookingSystem() {
-        for (int i = 0; i < rideCount; i++) {
-            delete rides[i];
-        }
+        for (int i = 0; i < rideCount; i++) delete rides[i];
     }
 };
 
-// =============== USER ======================
+// =============== USER ====================
 class User : public Profile, public Vehicle {
 public:
-    User() {
-        int choice;
-        cout << "You have Successfully Logged in as User!\n";
-        cout << "Enter\n1. To Book Your Ride Online\n2. To Deliver Your Product\n";
-        cin >> choice;
-        while (choice < 1 || choice > 2) {
-            cout << "Invalid Value! Enter Again: ";
-            cin >> choice;
-        }
-        if (choice == 1) {
-            cout << "Redirecting to Ride Booking Module...\n";
-        }
-        else {
-            cout << "Redirecting to Delivery Module...\n";
-        }
-    }
+    User() {} // No prompts inside class
 };
 
-// =============== PASSENGER ==================
+// =============== PASSENGER ================
 class Passenger : public User {
 public:
     Passenger() {
         cout << "Passenger Account Created Successfully!\n";
     }
-
-    void requestRide() {
-        string pickup, drop;
-        cout << "Enter Pickup Location: ";
-        cin.ignore();
-        getline(cin, pickup);
-        cout << "Enter Drop Location: ";
-        getline(cin, drop);
-        cout << "Ride Requested from " << pickup << " to " << drop << ".\n";
-    }
 };
 
-// =============== DRIVER =====================
+// =============== DRIVER ==================
 class RideDriver : public User {
     bool isBusy;
 public:
@@ -222,8 +177,7 @@ public:
         if (!isBusy) {
             cout << "Ride Accepted from " << pickup << " to " << drop << ".\n";
             isBusy = true;
-        }
-        else {
+        } else {
             cout << "Driver is currently busy!\n";
         }
     }
@@ -232,17 +186,16 @@ public:
         if (isBusy) {
             cout << "Ride Completed Successfully!\n";
             isBusy = false;
-        }
-        else {
+        } else {
             cout << "No active ride to complete.\n";
         }
     }
 };
 
-// =============== ADMIN ======================
+// =============== ADMIN ==================
 class Admin {
 public:
-    Admin() {
+    Admin(BookingSystem& system) {
         int choice;
         cout << "You have Successfully Logged in as Admin!\n";
         cout << "Enter\n1. To View Past Rides\n2. To View Past Deliveries\n";
@@ -252,29 +205,29 @@ public:
             cin >> choice;
         }
         if (choice == 1) {
-            cout << "Displaying All Past Rides...\n";
-        }
-        else {
+            cout << "\n--- Ride History ---\n";
+            system.viewAllRides();
+        } else {
             cout << "Displaying All Past Deliveries...\n";
         }
     }
 };
 
-// =============== MAIN (UI) ===================
+// =============== MAIN ==================
 int main() {
     BookingSystem system;
     Passenger passenger;
     RideDriver driver;
     int choice;
 
-    cout << "\n?? Welcome to the Ride Booking System ??\n";
-    cout << "----------------------------------------\n";
-    cout << "Rules:\n";
-    cout << "- Users can book rides or deliveries.\n";
-    cout << "- A driver can only handle one ride at a time.\n";
-    cout << "- Admin can view previous data.\n";
-
     do {
+        cout << "\n Welcome to the Ride Booking System \n";
+        cout << "----------------------------------------\n";
+        cout << "Rules:\n";
+        cout << "- Users can book rides or deliveries.\n";
+        cout << "- A driver can only handle one ride at a time.\n";
+        cout << "- Admin can view previous data.\n";
+
         cout << "\nMain Menu:\n";
         cout << "1. Login as Admin\n";
         cout << "2. Login as User (Passenger)\n";
@@ -293,7 +246,7 @@ int main() {
 
         switch (choice) {
             case 1: {
-                Admin admin;
+                Admin admin(system);
                 break;
             }
             case 2: {
@@ -335,3 +288,4 @@ int main() {
 
     return 0;
 }
+
